@@ -1,0 +1,131 @@
+<html>
+<head>
+<style>
+/*图片外层容器设置为图片宽高，并且超出部分隐藏*/
+.wrapper{
+	width:590px;
+	height:470px;
+	margin:100px auto;
+	position: relative;
+	padding:0;
+	overflow: hidden;
+}
+/*图片内层ul设置绝对定位方便设置偏移量整体移动ul*/
+/*图片ul宽度要设置图片个数+1，这里就是600%，这样子元素float:left才能横向展开*/
+/*克隆第一个图片为了连续滚动，最终ul元素个数为图片个数+1*/
+.pic-group{
+	width:600%;
+	height:100%;
+	padding:0;
+	position: relative;
+}
+.pic-item{
+	float:left;
+}
+.btn-group{
+	position:absolute;
+	bottom:30px;
+	padding-left:267px;
+	margin:0 auto;
+	list-style:none;
+}
+.btn-item{
+	width:5px;
+	height:5px;
+	border-radius:50%;
+	float:left;
+	border:1px solid #fff;
+	margin:0 2px 0 2px;
+}
+.btn-item.current{
+	background:#fff;
+}
+</style>
+<script type="text/javascript">
+	//必须要等到DOM加载完毕再计算
+	window.onload=function(){
+		//动画移动的思路是将待移动元素做绝对定位，用offsetLeft获取元素的偏移量并用style.left设置偏移量
+		//思路就是利用绝对定位下元素的偏移量left移动元素
+		//这里不能用transform移动，因为每次transform元素都是从初始位置进行移动，动画不连续。
+		function animate(obj,target){
+			if(obj.timer){
+				clearInterval(obj.timer);
+			}
+		    //每帧动画的移动距离，这里每帧移动15px
+		    //当前元素的偏移量(左负右正)在目标偏移量右侧时说明是向左移动，为负
+		    //当前元素的偏移量在目标偏移量左侧时说明是右移动，为正
+		    var speed = obj.offsetLeft < target ? 15 : -15;
+		    //设置定时器，将元素移动到目标位置
+		    obj.timer = setInterval(()=>{
+		    	//它们的差值不会超过speed
+		        var diff = target - obj.offsetLeft;
+		        //移动一帧动画
+		        obj.style.left = obj.offsetLeft + speed + "px";
+		        // 边界条件，如果剩余距离(目标与当前位置的距离)小于没帧移动距离
+		        //将元素移动到目标位置，结束动画             
+		        if (Math.abs(diff) <= Math.abs(speed)) {
+		            clearInterval(obj.timer);
+		            obj.style.left = target + "px";
+		        }
+		    },10);
+		}
+	    var ul = document.getElementById("pics") // 获得ul
+	    var liWidth = ul.children[0].offsetWidth// 获得每个li的宽度
+	    var curIndex=0//当前播放的图片索引
+	    var btnIndex=0//当前按钮索引
+        // 因为要做无缝滚动，所以要克隆第一张，放到最后一张后面
+        ul.appendChild(ul.children[0].cloneNode(true));
+        var ulLis = ul.children// 获得ul的盒子 以此来生成ol中li的个数
+        var ulBtns = document.getElementById("btns").children
+        //初始化第一个按钮索引为current样式
+        ulBtns[0].className="btn-item current"
+        //自动播放
+	    var timer=setInterval(autoplay,1000)
+	    //自动播放函数
+	    function autoplay(){
+	    	/*自动轮播时,要对播放的张数key进行一个判断,如果播放的张数超过ulLis.length-1,
+            就要重头开始播放.  因为我们克隆了第一张并将其放在最后面,所以我们要从第二张图片开始播放*/
+            curIndex++// 先++
+            btnIndex++
+            if(curIndex > ulLis.length-1){// 后判断
+                //ul.style.transform = 'translate3d(0,0,0)' // 迅速调回
+                ul.style.left=0
+                curIndex = 1 // 因为第6张是第一张，所以播放的时候是从第2张开始播放
+            }
+            if(btnIndex>ulBtns.length-1){
+            	btnIndex=0
+            }
+            //element.children是子节点类数组NodeList，不可以直接用forEach遍历，但是有length属性
+            for(var i=0;i<ulBtns.length;i++){
+            	if(btnIndex==i){
+            		ulBtns[i].className="btn-item current"
+            	}else{
+            		ulBtns[i].className="btn-item"
+            	}
+            }
+            // 动画部分
+            animate(ul,-curIndex*liWidth)
+	    }
+
+	}
+</script>
+</head>
+<body>
+<div class="wrapper">
+	<ul class="pic-group" id="pics">
+		<li class="pic-item"><img src="1.jpg"></li>
+		<li class="pic-item"><img src="2.jpg"></li>
+		<li class="pic-item"><img src="3.jpg"></li>
+		<li class="pic-item"><img src="4.jpg"></li>
+		<li class="pic-item"><img src="5.jpg"></li>
+	</ul>
+	<ul class="btn-group" id="btns">
+		<li class="btn-item"></li>
+		<li class="btn-item"></li>
+		<li class="btn-item"></li>
+		<li class="btn-item"></li>
+		<li class="btn-item"></li>
+	</ul>
+</div>
+</body>
+</html>
